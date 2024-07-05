@@ -64,3 +64,15 @@ def compute_affine_transform(points_image1, points_image2):
 def warp_image(image, M, output_shape):
     warped_image = cv2.warpAffine(image, M, output_shape)
     return warped_image
+
+def apply_affine_transform_2d(coordinates, transformation_matrix):
+    """
+    对二维坐标应用仿射变换
+    """
+    # 添加齐次坐标
+    homogeneous_coordinates = np.hstack([coordinates, np.ones((coordinates.shape[0], 1))])
+    
+    # 应用仿射变换
+    transformed_coordinates = np.dot(homogeneous_coordinates, transformation_matrix.T)
+    
+    return transformed_coordinates[:, :2]
