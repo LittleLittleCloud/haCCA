@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Protocol
-import pydantic
+#import pydantic
 import numpy as np
 
 @dataclass
