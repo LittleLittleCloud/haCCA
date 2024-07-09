@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hacca"
+dynamic = ["version", "dependencies"]
+keywords = ["hacca"] # adding more keywords here
+description = "A short description of your package"
+readme = "README.md" # Assuming you have a README.md file
+authors = [
+    { name = "XiaoTian Shen", email = "14301050178@fudan.edu.cn" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/shenxiaotianCNS/APC-MSI"
+Repository = "https://github.com/shenxiaotianCNS/APC-MSI.git"
+Issues = "https://github.com/shenxiaotianCNS/APC-MSI/issues"
+
+[project.optional-dependencies]
+# Define any optional dependencies here
+
+[project.scripts]
+# Define any scripts here
+
+[tool.setuptools]
+packages = ["hacca"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.in"] }
+version = {attr = "hacca.__version__"}
