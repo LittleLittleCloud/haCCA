@@ -1,0 +1,13 @@
+#
+#    pip-compile requirements.in --upgrade
+#
+
+anndata
+scipy
+numpy
+pandas
+scanpy
+scikit-learn
+matplotlib
+natsort
+seaborn
