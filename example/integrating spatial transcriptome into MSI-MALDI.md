@@ -99,7 +99,8 @@ b_prime = Data(X=b_prime_h5ad.X.toarray(), D = b_prime_spatial, Label=b_prime_h5
 
 # <font size=1>Ok lets hacca. This is the classic hacca, morphopogical alignment is peformed by 1.manual gross algnment and 2.further alignment.combined feature and morphological alignment is performed by ICP
 
-# <font size=2>**Step2: gross manual alignment**
+# <font size=2>**Step2: gross manual alignment** 
+# <font size=1> In this step, 2 windows of morphological plots will shown. You should manually choose 3 pairs of feature points by clicking. In this case, feature points is shown in red box.
 
 
 ```python
@@ -112,6 +113,17 @@ _b_prime = hacca.manual_gross_alignment(a, b_prime, work_dir=manual_gross_furthe
 
     
 ![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_15_0.png)
+    
+
+
+
+```python
+
+```
+
+
+    
+![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_16_0.png)
     
 
 
@@ -162,7 +174,7 @@ hacca.plot_b_predict(b_predict,manual_gross_further_ICP_work_dir)
 
 
     
-![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_21_1.png)
+![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_22_1.png)
     
 
 
@@ -198,7 +210,7 @@ plt.show()
 
 
     
-![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_25_0.png)
+![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_26_0.png)
     
 
 
@@ -217,7 +229,7 @@ plt.show()
 
 
     
-![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_27_0.png)
+![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_28_0.png)
     
 
 
