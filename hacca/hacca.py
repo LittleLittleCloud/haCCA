@@ -452,6 +452,7 @@ def find_anchor_points(
     # [(0, 0), (1, 1), (3, 2), (4, 3)]
     anchor_points = [(i, j) for i in simpson_index for j in indice_group_by_a[i]]
     anchor_points_with_distance = [(i, j, distances[i, j]) for i, j in anchor_points]
+    print("anchor_points_pairs",len(anchor_points_with_distance))
 
     return anchor_points_with_distance
 
@@ -492,7 +493,7 @@ def find_high_correlation_features(
             break
         if correlation > low_threshold and correlation <= high_threshold and j not in [j for _, j, _ in top_n_features]:
             top_n_features.append((i, j, correlation))    
-
+    print("lenth of high_correlated_features_pairs",len(top_n_features))
     return top_n_features
 
 def cca_featurize(
@@ -1050,17 +1051,17 @@ if __name__ == '__main__':
     work_dir = os.path.join(cwd, '..', 'work')
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
-    a_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M2.h5ad")
-    b_prime_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M1.h5ad")
-    #a_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\m3\\m3_9AA_VisiumArray.h5ad")
-    #b_prime_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\m3\\m3_visium_ctrl.h5ad")
+    #a_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M2.h5ad")
+    #b_prime_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M1.h5ad")
+    a_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\m3\\m3_9AA_VisiumArray.h5ad")
+    b_prime_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\m3\\m3_visium_ctrl.h5ad")
     #b_prime = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M2.h5ad")
     #a = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M1.h5ad")
     a_h5ad.obs["leiden"] = a_h5ad.obs["clusters"]
     b_prime_h5ad.obs["leiden"] = b_prime_h5ad.obs["clusters"]
-    #idx_to_remove = a_h5ad.obs["clusters"][a_h5ad.obs["clusters"] == "0"]
-    #keep_cells_mask = ~a_h5ad.obs.index.isin(idx_to_remove.index)
-    #a_h5ad = a_h5ad[keep_cells_mask, :]
+    idx_to_remove = a_h5ad.obs["clusters"][a_h5ad.obs["clusters"] == "0"]
+    keep_cells_mask = ~a_h5ad.obs.index.isin(idx_to_remove.index)
+    a_h5ad = a_h5ad[keep_cells_mask, :]
 
 
     #### scale spatial data of a and b_prime
@@ -1086,8 +1087,8 @@ if __name__ == '__main__':
     _b_prime = further_alignment(a, _b_prime)
     _a, _b_prime = icp_3d_alignment(a, _b_prime)
     b_preidct = direct_alignment(_a, _b_prime, work_dir=manual_gross_further_work_dir)
-    manual_gross_further = loss(b_preidct, b_truth)
-    print(f"manual_gross_further: loss: {manual_gross_further}")
+    #manual_gross_further = loss(b_preidct, b_truth)
+    #print(f"manual_gross_further: loss: {manual_gross_further}")
     plot_b_predict(b_preidct,manual_gross_further_work_dir)
 
     # icp 3d alignment
@@ -1101,14 +1102,14 @@ if __name__ == '__main__':
     #print(f"ICP 3D: loss: {icp_3d_loss}")
 
     # fgw 3d alignment
-    fgw_3d_work_dir = os.path.join(work_dir, 'fgw_3d')
-    if not os.path.exists(fgw_3d_work_dir):
-        os.makedirs(fgw_3d_work_dir)
-    _a, _b_prime = fgw_3d_alignment(a, b_prime, fgw_3d_work_dir, alpha=0.8)
-    b_predict = direct_alignment(_a, _b_prime, work_dir=fgw_3d_work_dir)
-    plot_b_predict(b_predict, fgw_3d_work_dir)
-    fgw_3d_loss = loss(b_predict, b_truth)
-    print(f"FGW 3D: loss: {fgw_3d_loss}")
+    #fgw_3d_work_dir = os.path.join(work_dir, 'fgw_3d')
+    #if not os.path.exists(fgw_3d_work_dir):
+    #    os.makedirs(fgw_3d_work_dir)
+    #_a, _b_prime = fgw_3d_alignment(a, b_prime, fgw_3d_work_dir, alpha=0.8)
+    #b_predict = direct_alignment(_a, _b_prime, work_dir=fgw_3d_work_dir)
+    #plot_b_predict(b_predict, fgw_3d_work_dir)
+    #fgw_3d_loss = loss(b_predict, b_truth)
+    #print(f"FGW 3D: loss: {fgw_3d_loss}")
 
     # Run FGW 2D alignment
     #fgw_2d_work_dir = os.path.join(work_dir, 'fgw_2d')
