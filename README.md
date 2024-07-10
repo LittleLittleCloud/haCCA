@@ -112,18 +112,8 @@ _b_prime = hacca.manual_gross_alignment(a, b_prime, work_dir=manual_gross_furthe
 
 
     
-![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_15_0.png)
-    
-
-
-
-```python
-
-```
-
-
-    
 ![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_16_0.png)
+![png](integrating%20spatial%20transcriptome%20into%20MSI-MALDI_files/integrating%20spatial%20transcriptome%20into%20MSI-MALDI_15_0.png)    
     
 
 
