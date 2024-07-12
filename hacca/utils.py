@@ -1,7 +1,9 @@
 
-import cv2
 from matplotlib import cm, pyplot as plt
+import cv2
 import numpy as np
+from sklearn.discriminant_analysis import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 
 
 def create_image_from_data(data, width=500, height=500, dot_size=5, border_size=50, dot_colors=None, border_color=(0, 0, 0), colormap='viridis'):
@@ -76,3 +78,18 @@ def apply_affine_transform_2d(coordinates, transformation_matrix):
     transformed_coordinates = np.dot(homogeneous_coordinates, transformation_matrix.T)
     
     return transformed_coordinates[:, :2]
+
+
+def center_and_scale(data, feature_range=(0, 500)):
+    """
+    对数据进行中心缩放和范围缩放
+    """
+    # 中心缩放
+    scaler_center = StandardScaler()
+    data_centered = scaler_center.fit_transform(data)
+    
+    # 范围缩放
+    scaler_range = MinMaxScaler(feature_range=feature_range)
+    data_scaled = scaler_range.fit_transform(data_centered)
+    
+    return data_scaled

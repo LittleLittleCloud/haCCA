@@ -1,37 +1,20 @@
-import os, sys
+import os
 from typing import Tuple, Union
-from anndata import AnnData
-from matplotlib import pyplot as plt
-import scanpy as sc
 from sklearn.cross_decomposition import CCA
-from sklearn.metrics import adjusted_rand_score
-from sklearn.manifold import TSNE
-from scipy.sparse import csr_matrix
 from scipy.sparse import csr_matrix
 import numpy as np
-import umap.umap_ as umap
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.decomposition import PCA
 import pandas as pd
 from scipy.spatial.distance import cdist
-import random
 from scipy.spatial import cKDTree
 import ot
 from collections import Counter
-from hacca.data import Data
-import numpy as np
-import pandas as pd
+from .data import Data
+from .utils import center_and_scale, create_image_from_data
 import cv2
-import matplotlib.pyplot as plt
-import cv2
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-import numpy as np
-import pandas as pd
-from scipy.spatial.distance import cdist
 from scipy.optimize import minimize
-import matplotlib.pyplot as plt
 
 def count_elements(lst):
     return dict(Counter(lst))
@@ -221,38 +204,7 @@ def calculate_accuracy_for_pairwise_alignment(
     print(f"Accuracy for pairwise alignment: {accuracy_directmerge}")
     return accuracy_directmerge
 
-def label_transfer_ari(source: Data, target: Data):
-    """
-    Compute the Adjusted Rand Index (ARI) between the labels of the source and target datasets.
-    
-    Parameters:
-    - source: Data instance, the source dataset with original labels.
-    - target: Data instance, the target dataset with transferred labels.
-    
-    Returns:
-    - ARI: The Adjusted Rand Index, measuring the similarity between the source and target labels.
-    """
-    # Assuming source.Label and target.Label are numpy arrays of labels
-    ari_score = adjusted_rand_score(source.Label, target.Label)
-    return ari_score
 
-def loss(predict: Data, target: Data, alpha: float = 0.5) -> float:
-    """
-    Calculate the loss between the predict and target data
-    :param predict: Data, the predict data
-    :param target: Data, the target data
-    :param alpha: float, the balance parameter
-    :return: float, the loss
-    """
-    # calculate the L2 loss between the predict and target D matrix
-    loss_D = np.linalg.norm(predict.X - target.X, ord=2)
-
-    # calculate the label match accuracy
-    same_values_mask = predict.Label == target.Label
-    accuracy = sum(same_values_mask) / len(same_values_mask)
-    ari = label_transfer_ari(predict, target)
-    
-    return loss_D, accuracy, ari
 
 def further_alignment(
         a: Data, # A (X_1, D),
@@ -575,19 +527,6 @@ def direct_alignment(
 
     return b_predict
 
-def center_and_scale(data, feature_range=(0, 500)):
-    """
-    对数据进行中心缩放和范围缩放
-    """
-    # 中心缩放
-    scaler_center = StandardScaler()
-    data_centered = scaler_center.fit_transform(data)
-    
-    # 范围缩放
-    scaler_range = MinMaxScaler(feature_range=feature_range)
-    data_scaled = scaler_range.fit_transform(data_centered)
-    
-    return data_scaled
 
 def icp_3d_alignment(
         a: Data, # A (n, X_1, D),
@@ -961,24 +900,6 @@ def fgw_3d_alignment(
 
     # direct alignment
     return a, b_prime
-    
-
-def hacca(
-        a: Data, # A (X_1, D)
-        b_prime: Data, # B' (X_2, D)
-        work_dir: str = None, # the working directory, will be created if not exists. Will be used to save the intermediate results.
-    ) -> Data: # A' (X_2, D)
-    """
-    HACCA
-    :param data1: AnnData, the first dataset
-    :param data2: AnnData, the second dataset
-    :return: B', the aligned and clustered data
-    """
-    print("sxt shi sha bi")
-    # direct alignment
-    a_prime = direct_alignment(a, b_prime, data1_spatial_results, data2_spatial_results, data1_leiden_str, data2_leiden_str, work_dir)
-    # calculate the accuracy for pairwise alignment of direct alignment
-    calculate_accuracy_for_pairwise_alignment(direct_alignement_pair)
 
 def convert_to_array(x):
     if isinstance(x, csr_matrix):
@@ -1028,130 +949,3 @@ def plot_b_predict(
        # plt.show()
         if save is True:
             plt.savefig(os.path.join(work_dir, 'align.pdf'))
-
-
-
-#   a_prime: n1*m2 trancriptional data n_obs*n_vars
-#   a: n1*m1 metabolic data  sample*features
-#   b_truth: n2*m1 metabolic data
-#   b_prime: n2*m2 trancriptional data
-#   b_predict: n2*m1 metabolic data
-#   n1>n2
-#   a refer to the reference spatial data(usually metabolic data in haCCA),
-#   b_prime refer to the translate spatial data(usually transcriptome)
-#   b_truth refer to the groundtruth of translated b_prime
-#   b_predict refer to the haCCA translated b_prime
-
-if __name__ == '__main__':
-    # Load data
-    import os
-    # get the path of current file
-    cwd = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(cwd, '..', 'data')
-    work_dir = os.path.join(cwd, '..', 'work')
-    if not os.path.exists(work_dir):
-        os.makedirs(work_dir)
-    #a_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M2.h5ad")
-    #b_prime_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M1.h5ad")
-    a_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\m3\\m3_9AA_VisiumArray.h5ad")
-    b_prime_h5ad = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\m3\\m3_visium_ctrl.h5ad")
-    #b_prime = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M2.h5ad")
-    #a = sc.read_h5ad("I:\\mutiomics\\Spatial Multimodal Analysis of Transcriptomes and Metabolomes in Tissues\\benchmark\\GC\\M1.h5ad")
-    a_h5ad.obs["leiden"] = a_h5ad.obs["clusters"]
-    b_prime_h5ad.obs["leiden"] = b_prime_h5ad.obs["clusters"]
-    idx_to_remove = a_h5ad.obs["clusters"][a_h5ad.obs["clusters"] == "0"]
-    keep_cells_mask = ~a_h5ad.obs.index.isin(idx_to_remove.index)
-    a_h5ad = a_h5ad[keep_cells_mask, :]
-
-
-    #### scale spatial data of a and b_prime
-    b_prime_spatial = pd.DataFrame(b_prime_h5ad.obsm['spatial'])
-    scaledata = center_and_scale(b_prime_spatial)
-    b_prime_spatial = pd.DataFrame(scaledata, columns=b_prime_spatial.columns).to_numpy()
-
-    a_spatial = pd.DataFrame(a_h5ad.obsm['spatial'])
-    scaledata = center_and_scale(a_spatial)
-    a_spatial = pd.DataFrame(scaledata, columns=a_spatial.columns).to_numpy()
-
-    # create a and b_prime
-    a = Data(X=a_h5ad.X.toarray(), D = a_spatial, Label=a_h5ad.obs['leiden'].to_numpy())
-    b_prime = Data(X=b_prime_h5ad.X.toarray(), D = b_prime_spatial, Label=b_prime_h5ad.obs['leiden'].to_numpy())
-    b_truth = a
-
-    # manual_gross + further alignment
-    manual_gross_further_work_dir = os.path.join(work_dir, 'manual_gross_further')
-    if not os.path.exists(manual_gross_further_work_dir):
-        os.makedirs(manual_gross_further_work_dir)
-
-    _b_prime = manual_gross_alignment(a, b_prime, work_dir=manual_gross_further_work_dir)
-    _b_prime = further_alignment(a, _b_prime)
-    _a, _b_prime = icp_3d_alignment(a, _b_prime)
-    b_preidct = direct_alignment(_a, _b_prime, work_dir=manual_gross_further_work_dir)
-    #manual_gross_further = loss(b_preidct, b_truth)
-    #print(f"manual_gross_further: loss: {manual_gross_further}")
-    plot_b_predict(b_preidct,manual_gross_further_work_dir)
-
-    # icp 3d alignment
-    #icp_3d_work_dir = os.path.join(work_dir, 'icp_3d')
-    #if not os.path.exists(icp_3d_work_dir):
-    #    os.makedirs(icp_3d_work_dir)
-    #_a, _b_prime = icp_3d_alignment(a, b_prime, icp_3d_work_dir)
-    #b_predict = direct_alignment(_a, _b_prime, work_dir=icp_3d_work_dir)
-    #plot_b_predict(b_predict, icp_3d_work_dir)
-    #icp_3d_loss = loss(b_predict, b_truth)
-    #print(f"ICP 3D: loss: {icp_3d_loss}")
-
-    # fgw 3d alignment
-    #fgw_3d_work_dir = os.path.join(work_dir, 'fgw_3d')
-    #if not os.path.exists(fgw_3d_work_dir):
-    #    os.makedirs(fgw_3d_work_dir)
-    #_a, _b_prime = fgw_3d_alignment(a, b_prime, fgw_3d_work_dir, alpha=0.8)
-    #b_predict = direct_alignment(_a, _b_prime, work_dir=fgw_3d_work_dir)
-    #plot_b_predict(b_predict, fgw_3d_work_dir)
-    #fgw_3d_loss = loss(b_predict, b_truth)
-    #print(f"FGW 3D: loss: {fgw_3d_loss}")
-
-    # Run FGW 2D alignment
-    #fgw_2d_work_dir = os.path.join(work_dir, 'fgw_2d')
-    #if not os.path.exists(fgw_2d_work_dir):
-    #    os.makedirs(fgw_2d_work_dir)
-    #_b_prime = fgw_2d_alignment(a, b_prime, fgw_2d_work_dir)
-    #b_predict = direct_alignment(a, _b_prime, work_dir=fgw_2d_work_dir)
-    #plot_b_predict(b_predict, fgw_2d_work_dir)
-    #fgw_2d_loss = loss(b_predict, b_truth)
-    #print(f"FGW 2D: loss: {fgw_2d_loss}")
-
-    # Run ICP 2D alignment
-    #icp_2d_work_dir = os.path.join(work_dir, 'icp_2d')
-    #if not os.path.exists(icp_2d_work_dir):
-    #    os.makedirs(icp_2d_work_dir)
-
-    #_b_prime = icp_2d_alignment(a, b_prime, icp_2d_work_dir)
-    #b_predict = direct_alignment(a, _b_prime, work_dir=icp_2d_work_dir)
-    #plot_b_predict(b_predict, icp_2d_work_dir)
-    #icp_2d_loss = loss(b_predict, b_truth)
-    #print(f"ICP 2D: loss: {icp_2d_loss}")
-
-    # Run direct alignment
-    #direct_alignment_work_dir = os.path.join(work_dir, 'direct_alignment')
-    #if not os.path.exists(direct_alignment_work_dir):
-    #    os.makedirs(direct_alignment_work_dir)
-    
-    #b_predict = direct_alignment(a, b_prime, direct_alignment_work_dir)
-    #plot_b_predict(b_predict, direct_alignment_work_dir)
-    #direct_alignment_loss = loss(b_predict, b_truth)
-    #print(f"Direct alignment w/ center and scale: loss: {direct_alignment_loss}")
-
-    # Run ICD2D-FGW3D alignment
-    #ICD2D_FGW3D_alignment_work_dir = os.path.join(work_dir, 'ICD2D-FGW3D')
-    #if not os.path.exists(ICD2D_FGW3D_alignment_work_dir):
-    #    os.makedirs(ICD2D_FGW3D_alignment_work_dir)
-    
-    #_b_prime = fgw_2d_alignment(a, b_prime, ICD2D_FGW3D_alignment_work_dir)
-    #_a, _b_prime = icp_3d_alignment(a, _b_prime, ICD2D_FGW3D_alignment_work_dir)
-    #b_predict = direct_alignment(_a, _b_prime, ICD2D_FGW3D_alignment_work_dir)
-    #plot_b_predict(b_predict, ICD2D_FGW3D_alignment_work_dir)
-    #ICD2D_FGW3D_alignment_loss = loss(b_predict, b_truth)
-    #print(f"Run FWG2D-ICP3D alignment: loss: {ICD2D_FGW3D_alignment_loss}")
-    # Run HACCA
-    # hacca(a, b, work_dir)

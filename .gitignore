@@ -9,3 +9,5 @@ work
 *.egg-info
 build
 dist
+
+work*

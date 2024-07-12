@@ -33,4 +33,4 @@ packages = ["hacca"]
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.in"] }
-version = {attr = "hacca.__version__"}
+version = {attr = "hacca.version.__version__"}
