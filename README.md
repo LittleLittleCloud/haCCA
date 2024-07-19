@@ -2,6 +2,8 @@
 
 haCCA, a workflow utilizing high Correlated feature pairs combined with a modified spatial morphological alignment to ensure high resolution and accuracy of spot-to-spot data integration of spatial transcriptomes and metabolomes.
 
+[![PyPI version](https://badge.fury.io/py/hacca.svg)](https://badge.fury.io/py/haCCA)
+
 ## Installation
 
 ```python
