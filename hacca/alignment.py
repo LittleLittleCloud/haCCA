@@ -414,10 +414,11 @@ def find_high_correlation_features(
         low_threshold: float = 0, # the threshold for low correlation
         high_threshold: float = 0.95, # the threshold for high correlation
         n_features: int = 100, # the number of features to select
+        dist_min: float = 100, # the minimum distance for further alignment
 ) -> Data: # [(a_i, b_j, correlation_i_j)] where a_i is the feature in A and b_j is the feature in B'
     a_X = a.X
     b_prime_X = b_prime.X
-    anchor_points_with_distance = find_anchor_points(a, b_prime)
+    anchor_points_with_distance = find_anchor_points(a, b_prime, dist_min=dist_min)
     # anchor_points_with_distance example
     # [(0, 0, 0.1), (1, 1, 0.2), (3, 2, 0.3), (4, 3, 0.4)]
 
@@ -535,10 +536,11 @@ def icp_3d_alignment(
         max_iterations: int = 500, # the maximum number of iterations
         tolerance: float = 1e-5, # the tolerance for convergence
         n_components: int = 1, # the number of components to keep
+        low_threshold: float = 0, # the threshold for low correlation
         verbose: bool = False,
     ) -> Tuple[Data, Data]: # (A(n, X_1, D), B_predict (n, X_2, D))
 
-    correlation_feature_pairs = find_high_correlation_features(a, b_prime)
+    correlation_feature_pairs = find_high_correlation_features(a, b_prime, low_threshold=low_threshold)
     (cca_a, cca_b_prime) = cca_featurize(a, b_prime, correlation_feature_pairs, n_components, work_dir)
     a_d = a.D
     b_prime_d = b_prime.D
@@ -816,9 +818,10 @@ def fgw_3d_alignment(
         tol_abs: float = 1e-9, # the absolute tolerance
         armijo: bool = True, # whether to use Armijo line search
         n_components: int = 1, # the number of components to keep
+        low_threshold: float = 0, # the threshold for low correlation
         verbose: bool = False
 ) -> Tuple[Data, Data]: # (A(n, X_1, D), B_predict (n, X_2, D))
-    correlation_feature_pairs = find_high_correlation_features(a, b_prime)
+    correlation_feature_pairs = find_high_correlation_features(a, b_prime, low_threshold=low_threshold)
     (cca_a, cca_b_prime) = cca_featurize(a, b_prime, correlation_feature_pairs, n_components, work_dir)
     Q = a.D
     P = b_prime.D
