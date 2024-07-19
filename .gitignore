@@ -3,7 +3,6 @@ venv
 .idea
 
 __pycache__
-data
 work
 
 *.egg-info
