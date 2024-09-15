@@ -46,8 +46,15 @@ color_mapping = {
 }
 
 
-def create_image_from_data(data, width=500, height=500, dot_size=5, border_size=50, dot_colors=None,
-                           border_color=(0, 0, 0), colormap='viridis'):
+def create_image_from_data(
+        data,
+        width: int = 500,
+        height: int = 500,
+        dot_size: int = 5,
+        border_size: int = 50,
+        dot_colors: str = None,
+        border_color=(0, 0, 0),
+        colormap: str ='viridis'):
     """
     Create an image from 2D data points with specified dot size, border size, and colors.
 
@@ -469,7 +476,7 @@ def cca_featurize(
         print(feature_b)
         print(feature_a)
         print(feature_a2)
-    cca = CCA(n_components=1)
+    cca = CCA(n_components=n_components)
     feature_a2, feature_b = cca.fit_transform(feature_a2, feature_b)
     feature_a = cca.transform(feature_a)
     return feature_a, feature_b
@@ -536,11 +543,15 @@ def icp_3d_alignment(
         max_iterations: int = 500, # the maximum number of iterations
         tolerance: float = 1e-5, # the tolerance for convergence
         n_components: int = 1, # the number of components to keep
-        low_threshold: float = 0, # the threshold for low correlation
         verbose: bool = False,
+        low_threshold: float = 0, # the threshold for low correlation
+        high_threshold: float = 0.95, # the threshold for high correlation
+        n_features: int = 100, # the number of features to select
+        dist_min: float = 100, # the minimum distance for further alignment
     ) -> Tuple[Data, Data]: # (A(n, X_1, D), B_predict (n, X_2, D))
 
-    correlation_feature_pairs = find_high_correlation_features(a, b_prime, low_threshold=low_threshold)
+    correlation_feature_pairs = find_high_correlation_features(a, b_prime, low_threshold=low_threshold,
+                                                               high_threshold=high_threshold,dist_min = dist_min,n_features=n_features )
     (cca_a, cca_b_prime) = cca_featurize(a, b_prime, correlation_feature_pairs, n_components, work_dir)
     a_d = a.D
     b_prime_d = b_prime.D
