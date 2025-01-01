@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from .alignment import direct_alignment, Data, direct_alignment_with_k_nearest_neighbors, icp_2d_with_feature_alignment
+from .alignment import direct_alignment, Data, direct_alignment_with_k_nearest_neighbors, icp_2d_with_feature_alignment, icp_2d_alignment, fgw_2d_alignment, fgw_3d_alignment
 
 def test_direct_alignment():
     # Create mock data
@@ -52,7 +52,7 @@ def test_direct_alignment_with_k_nearest_neighbors():
         # aligned_a.label should be in one of [A, B]
         assert all([label in labels_a for label in aligned_b.Label]), "Aligned data should have labels in a"
 
-def test_icp_2d_with_feature_alignemnt():
+def test_icp_2d_with_feature_alignment():
     # Create mock data
     labels_a = ["A", "B"]
     labels_b = ["C", "D", "E"]
@@ -78,8 +78,66 @@ def test_icp_2d_with_feature_alignemnt():
     # b_prime_'s label should be in one of [C, D, E]
     assert all([label in labels_b for label in b_prime_.Label]), "Aligned data should have labels in b_prime"
 
+def test_icp_2d_feature_alignment():
+    # Create mock data
+    labels_a = ["A", "B"]
+    labels_b = ["C", "D", "E"]
+    a = _generate_mock_data(200, 30, labels_a)
+    b_prime = _generate_mock_data(300, 20, labels_b)
 
+    b_prime_ = icp_2d_alignment(
+        a, b_prime,
+        work_dir=None,
+    )
 
+    # b_prime_'s X's dimension should be the same as X_b_prime's dimension
+    assert b_prime_.X.shape[1] == 20, "Aligned data should have the same number of features as b_prime"
+
+    # b_prime_'s label should be in one of [C, D, E]
+    assert all([label in labels_b for label in b_prime_.Label]), "Aligned data should have labels in b_prime"
+
+def test_fgw_2d_alignment():
+    # Create mock data
+    labels_a = ["A", "B"]
+    labels_b = ["C", "D", "E"]
+    a = _generate_mock_data(200, 30, labels_a)
+    b_prime = _generate_mock_data(300, 20, labels_b)
+
+    b_prime_ = fgw_2d_alignment(
+        a, b_prime,
+        work_dir=None
+    )
+
+    # b_prime_'s X's dimension should be the same as X_b_prime's dimension
+    assert b_prime_.X.shape[1] == 20, "Aligned data should have the same number of features as b_prime"
+
+    # b_prime_'s label should be in one of [C, D, E]
+    assert all([label in labels_b for label in b_prime_.Label]), "Aligned data should have labels in b_prime"
+
+def test_fgw_3d_alignment():
+    # Create mock data
+    labels_a = ["A", "B"]
+    labels_b = ["C", "D", "E"]
+    a = _generate_mock_data(200, 30, labels_a)
+    b_prime = _generate_mock_data(300, 20, labels_b)
+
+    a_, b_prime_ = fgw_3d_alignment(
+        a, b_prime,
+        work_dir=None,
+        simpson_index_threshold=0.99,
+    )
+
+    # a_'s X's dimension should be the same as X_a's dimension
+    assert a_.X.shape[1] == 30, "Aligned data should have the same number of features as a"
+
+    # a_'s label should be in one of [A, B]
+    assert all([label in labels_a for label in a_.Label]), "Aligned data should have labels in a"
+
+    # b_prime_'s X's dimension should be the same as X_b_prime's dimension
+    assert b_prime_.X.shape[1] == 20, "Aligned data should have the same number of features as b_prime"
+
+    # b_prime_'s label should be in one of [C, D, E]
+    assert all([label in labels_b for label in b_prime_.Label]), "Aligned data should have labels in b_prime"
 
 def _generate_mock_data(n: int, feature_n: int, labels):
     """

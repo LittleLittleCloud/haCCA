@@ -14,6 +14,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy.optimize import minimize
+import ot
 
 color_mapping = {
     0: 'blue',
@@ -731,7 +732,7 @@ def fgw_2d_alignment(
         tol_rel: float = 1e-9, # the relative tolerance
         tol_abs: float = 1e-9, # the absolute tolerance
         armijo: bool = True, # whether to use Armijo line search
-) -> pd.DataFrame: # the aligned pairs of point pairs (data1.X, data1.Y, data2.X, data2.Y)
+):
     
     # 假设 P 和 Q 是两个点云，形状分别为 (n, d) 和 (m, d)
     Q = a.D  # Example DYGW1 features
@@ -831,9 +832,10 @@ def fgw_3d_alignment(
         armijo: bool = True, # whether to use Armijo line search
         n_components: int = 1, # the number of components to keep
         low_threshold: float = 0, # the threshold for low correlation
+        simpson_index_threshold: float = 0.5, # the threshold for anchor points
         verbose: bool = False
 ) -> Tuple[Data, Data]: # (A(n, X_1, D), B_predict (n, X_2, D))
-    correlation_feature_pairs = find_high_correlation_features(a, b_prime, low_threshold=low_threshold)
+    correlation_feature_pairs = find_high_correlation_features(a, b_prime, low_threshold=low_threshold, simpson_index_threshold=simpson_index_threshold)
     (cca_a, cca_b_prime) = cca_featurize(a, b_prime, correlation_feature_pairs, n_components, work_dir)
     Q = a.D
     P = b_prime.D
