@@ -7,24 +7,13 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
 from scipy.spatial.distance import cdist
 from scipy.spatial import cKDTree
-import ot
 from collections import Counter
 from .data import Data
-from .utils import center_and_scale, create_image_from_data
+from .utils import calculate_simpson_index, center_and_scale, create_image_from_data
 import cv2
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy.optimize import minimize
-
-def count_elements(lst):
-    return dict(Counter(lst))
-
-def calculate_simpson_index(values):
-    total_count = len(values)
-    unique_values = set(values)
-    counters = count_elements(values)
-    simpson_index = 1 - sum((counters[value] * 1.0 / total_count) ** 2 for value in unique_values)
-    return simpson_index
 
 color_mapping = {
     0: 'blue',
@@ -388,7 +377,7 @@ def find_anchor_points(
 
     # get the label_group_by_a
     # {0: [a, a, b], 1: [a, b, b]}
-    label_group_by_a = {i: a.Label[indice_group_by_a[i]] for i in indice_group_by_a}
+    # label_group_by_a = {i: a.Label[indice_group_by_a[i]] for i in indice_group_by_a}
     # find the most common label for each group
     # {0: a, 1: b}
     most_common_label_group_by_a = {}
@@ -420,12 +409,13 @@ def find_high_correlation_features(
         b_prime: Data, # B' (m, X_2, D),
         low_threshold: float = 0, # the threshold for low correlation
         high_threshold: float = 0.95, # the threshold for high correlation
+        simpson_index_threshold: float = 0.5, # the threshold for anchor points
         n_features: int = 100, # the number of features to select
         dist_min: float = 100, # the minimum distance for further alignment
 ) -> Data: # [(a_i, b_j, correlation_i_j)] where a_i is the feature in A and b_j is the feature in B'
     a_X = a.X
     b_prime_X = b_prime.X
-    anchor_points_with_distance = find_anchor_points(a, b_prime, dist_min=dist_min)
+    anchor_points_with_distance = find_anchor_points(a, b_prime, dist_min=dist_min, simpson_index_threshold=simpson_index_threshold)
     # anchor_points_with_distance example
     # [(0, 0, 0.1), (1, 1, 0.2), (3, 2, 0.3), (4, 3, 0.4)]
 
@@ -494,6 +484,22 @@ def direct_alignment(
     :param work_dir: str, the working directory, will be created if not exists. Will be used to save the intermediate results.
     :return: Data, the aligned dataset for a
     """
+
+    return direct_alignment_with_k_nearest_neighbors(a, b_prime, k=1, work_dir=work_dir, enable_center_and_scale=enable_center_and_scale)[0]
+
+def direct_alignment_metric(
+        a: Data, # a (n, X_1, D)
+        b_prime: Data, # b' (m, X_2, D)
+        work_dir: str = None,
+        enable_center_and_scale: bool = False,
+) -> np.ndarray: # alignment metric: [n, m]
+    """
+    Direct alignment
+    :param a: Data, the first dataset
+    :param b_prime: Data, the second dataset
+    :param work_dir: str, the working directory, will be created if not exists. Will be used to save the intermediate results.
+    :return: Data, the aligned dataset for a
+    """
     a_D = a.D
     b_prime_D = b_prime.D
     # center and scale the D for a and b_prime
@@ -505,66 +511,62 @@ def direct_alignment(
     # the shape of distances is [n, m] where n is the number of data points in data1 and m is the number of data points in data2
     distances = cdist(a_D, b_prime_D, metric='euclidean') # shape: [n, m]
 
-    # Find the closest point in data2 for each point in data1
-    # the shape of min_row_indices is [n, 1] where n is the number of data points in data1
-    min_row_indices = np.argmin(distances, axis=0) # shape: [m, 1]
+    # define alignment metric as 1 / (1 + distance)
+    alignment_metric = 1 / (1 + distances)
 
-    # calculate the alignment result from data1 to data2
-    # the alignment result is a [m, 1] array where m is the number of data points in data1
-    # and the value is the index of the closest point in data2
+    return alignment_metric
 
-    alignment_a_prime = None if b_prime.X is None else a.X[min_row_indices]
-    b_predict = Data(X=alignment_a_prime, D=a_D[min_row_indices], Label=a.Label[min_row_indices])
+def direct_alignment_with_k_nearest_neighbors(
+        a: Data, # a (n, X_1, D)
+        b_prime: Data, # b' (m, X_2, D)
+        k: int = 1, # the number of nearest neighbors
+        work_dir: str = None, # the working directory, will be created if not exists. Will be used to save the intermediate results.
+        enable_center_and_scale: bool = False,
+) -> np.ndarray: # alignment metric: [n, m]
+    a_D = a.D
+    b_prime_D = b_prime.D
+    # center and scale the D for a and b_prime
+    if enable_center_and_scale:
+        a_D = center_and_scale(a.D)
+        
+    alignment_metric = direct_alignment_metric(a, b_prime, work_dir=work_dir, enable_center_and_scale=enable_center_and_scale)
 
-    if work_dir is not None:
-        # plot the direct alignment result
-        fig = plt.figure(figsize=(10,10))
-        ax = fig.add_subplot(111, projection='3d')
+    # Find k-th closest point in data1 for each point in data2
+    min_row_indices = np.argsort(alignment_metric, axis=0)[:k] # shape: [k, m]
+    res = []
+    for i in range(k):
+        alignment_a_prime = None if b_prime.X is None else a.X[min_row_indices[i]]
+        b_predict = Data(X=alignment_a_prime, D=a_D[min_row_indices[i]], Label=a.Label[min_row_indices[i]])
+        res.append(b_predict)
 
-        # plot the data points in data1 with zs = 1 and
-        ax.scatter(a.D[:, 0], a.D[:, 1], zs = 1, c=a.Label.astype('int'), marker='o', cmap='tab20')
-
-        # plot the data points in data2 with zs = -1 and color blue
-        ax.scatter(b_prime.D[:, 0], b_prime.D[:, 1], zs = -1, c=b_prime.Label.astype('int'), marker='s', cmap='tab20')
-        plt.xlabel('Component 1')
-        plt.ylabel('Component 2')
-        plt.legend()
-
-        # save the figure to work_dir/direct_alignment.png
-        fig.savefig(os.path.join(work_dir, 'direct_alignment.png'))
-
-    return b_predict
+    return res
 
 
-def icp_3d_alignment(
+
+def icp_2d_with_feature_alignment(
         a: Data, # A (n, X_1, D),
         b_prime: Data, # B' (m, X_2, D),
         work_dir: str = None, # the working directory, will be created if not exists. Will be used to save the intermediate results.
         max_iterations: int = 500, # the maximum number of iterations
         tolerance: float = 1e-5, # the tolerance for convergence
-        n_components: int = 1, # the number of components to keep
+        n_components: int = 1, # the number of components to keep, must be 1 for now
         verbose: bool = False,
         low_threshold: float = 0, # the threshold for low correlation
         high_threshold: float = 0.95, # the threshold for high correlation
+        simpson_index_threshold: float = 0.5, # the threshold for anchor points
         n_features: int = 100, # the number of features to select
         dist_min: float = 100, # the minimum distance for further alignment
     ) -> Tuple[Data, Data]: # (A(n, X_1, D), B_predict (n, X_2, D))
 
     correlation_feature_pairs = find_high_correlation_features(a, b_prime, low_threshold=low_threshold,
-                                                               high_threshold=high_threshold,dist_min = dist_min,n_features=n_features )
+                                                               high_threshold=high_threshold,dist_min = dist_min,n_features=n_features,
+                                                               simpson_index_threshold=simpson_index_threshold)
     (cca_a, cca_b_prime) = cca_featurize(a, b_prime, correlation_feature_pairs, n_components, work_dir)
     a_d = a.D
     b_prime_d = b_prime.D
 
     feature_a = np.hstack([a_d, cca_a])
     feature_b_prime = np.hstack([b_prime_d, cca_b_prime])
-
-    # 初始变换矩阵
-    transformation_matrix = np.eye(4)  # 初始变换矩阵为4x4单位矩阵
-
-    # 设置迭代参数
-    max_iterations = max_iterations
-    tolerance = tolerance
 
     if work_dir is not None:
         # 绘制初始点云
@@ -646,7 +648,6 @@ def icp_3d_alignment(
     a = Data(X=a.X, D=feature_a, Label=a.Label)
     b_prime = Data(X=b_prime.X, D=feature_b_prime, Label=b_prime.Label)
 
-    # run direct alignment with the DY1 and DY2
     return a, b_prime
     
 def icp_2d_alignment(

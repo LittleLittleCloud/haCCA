@@ -1,10 +1,20 @@
 
+from collections import Counter
 from matplotlib import cm, pyplot as plt
 import cv2
 import numpy as np
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 
+def count_elements(lst):
+    return dict(Counter(lst))
+
+def calculate_simpson_index(values):
+    total_count = len(values)
+    unique_values = set(values)
+    counters = count_elements(values)
+    simpson_index = 1 - sum((counters[value] * 1.0 / total_count) ** 2 for value in unique_values)
+    return simpson_index
 
 def create_image_from_data(data, width=500, height=500, dot_size=5, border_size=50, dot_colors=None, border_color=(0, 0, 0), colormap='viridis'):
     """
