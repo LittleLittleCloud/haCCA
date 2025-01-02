@@ -3,17 +3,19 @@ import numpy as np
 
 from hacca.utils import _generate_mock_data
 
-from .alignment import direct_alignment, Data, direct_alignment_with_k_nearest_neighbors, icp_2d_with_feature_alignment, icp_2d_alignment, fgw_2d_alignment, fgw_3d_alignment
+from .alignment import direct_alignment, direct_alignment_2, Data, direct_alignment_with_k_nearest_neighbors, icp_2d_with_feature_alignment, icp_2d_alignment, fgw_2d_alignment, fgw_3d_alignment
 
 def test_direct_alignment():
     # Create mock data
     labels_a = ["A", "B"]
     labels_b = ["C", "D", "E"]
-    a = _generate_mock_data(2, 3, labels_a)
-    b_prime = _generate_mock_data(3, 2, labels_b)
+    a = _generate_mock_data(5, 3, labels_a)
+    b_prime = _generate_mock_data(8, 2, labels_b)
 
     # Call direct_alignment
     aligned_b = direct_alignment(a, b_prime, work_dir=None, enable_center_and_scale=False)
+
+    aligned_b_2 = direct_alignment_2(a, b_prime, work_dir=None, enable_center_and_scale=False)
 
     # Assert aligned_a has the same shape as a but different content if any alignment occurred
     assert aligned_b.X.shape == (3, 3), "Aligned data should have the same shape in X dimension"
@@ -26,6 +28,9 @@ def test_direct_alignment():
 
     # aligned_a.label should be in one of [A, B]
     assert all([label in labels_a for label in aligned_b.Label]), "Aligned data should have labels in a"
+
+    # aligned_b_2 should be equal to aligned_b
+    assert np.allclose(aligned_b.X, aligned_b_2.X), "Aligned data should be the same"
 
 
 def test_direct_alignment_with_k_nearest_neighbors():

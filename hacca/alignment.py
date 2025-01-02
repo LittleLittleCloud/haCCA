@@ -576,6 +576,14 @@ def icp_2d_with_feature_alignment(
     feature_a = np.hstack([a_d, cca_a])
     feature_b_prime = np.hstack([b_prime_d, cca_b_prime])
 
+    # 初始变换矩阵
+    transformation_matrix = np.eye(4)  # 初始变换矩阵为4x4单位矩阵
+
+    # 设置迭代参数
+    max_iterations = max_iterations
+    tolerance = tolerance
+
+
     if work_dir is not None:
         # 绘制初始点云
         fig = plt.figure(figsize=(10, 5))
