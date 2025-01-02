@@ -524,6 +524,10 @@ def direct_alignment_with_k_nearest_neighbors(
         work_dir: str = None, # the working directory, will be created if not exists. Will be used to save the intermediate results.
         enable_center_and_scale: bool = False,
 ) -> np.ndarray: # alignment metric: [n, m]
+    
+    # throw if k > n
+    if k > a.D.shape[0]:
+        raise ValueError(f"k should be less than or equal to the number of data points in a, but got k={k} and n={a.D.shape[0]}")
     a_D = a.D
     b_prime_D = b_prime.D
     # center and scale the D for a and b_prime
@@ -532,12 +536,15 @@ def direct_alignment_with_k_nearest_neighbors(
         
     alignment_metric = direct_alignment_metric(a, b_prime, work_dir=work_dir, enable_center_and_scale=enable_center_and_scale)
 
-    # Find k-th closest point in data1 for each point in data2
-    min_row_indices = np.argsort(alignment_metric, axis=0)[:k] # shape: [k, m]
+    # Find k-th largest elements in the alignment metric, ordered from max to min
+    max_row_indices = np.argsort(alignment_metric, axis=0)[-k:] # shape: [k, n]
+
+    # reverse axis 1
+    max_row_indices = max_row_indices[::-1]
     res = []
     for i in range(k):
-        alignment_a_prime = None if b_prime.X is None else a.X[min_row_indices[i]]
-        b_predict = Data(X=alignment_a_prime, D=a_D[min_row_indices[i]], Label=a.Label[min_row_indices[i]])
+        alignment_b_prime = None if b_prime.X is None else a.X[max_row_indices[i]]
+        b_predict = Data(X=alignment_b_prime, D=a_D[max_row_indices[i]], Label=a.Label[max_row_indices[i]])
         res.append(b_predict)
 
     return res

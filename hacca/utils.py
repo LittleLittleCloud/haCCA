@@ -6,6 +6,8 @@ import numpy as np
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 
+from hacca.data import Data
+
 def count_elements(lst):
     return dict(Counter(lst))
 
@@ -103,3 +105,15 @@ def center_and_scale(data, feature_range=(0, 500)):
     data_scaled = scaler_range.fit_transform(data_centered)
     
     return data_scaled
+
+def _generate_mock_data(n: int, feature_n: int, labels):
+    """
+    Generate [n, feature_n] data and [n, 2] distance matrix with random selection of labels
+    """
+
+    X = np.random.rand(n, feature_n)
+    D = np.random.rand(n, 2)
+    label_indices = np.random.randint(0, len(labels), n)
+    labels = np.array([labels[i] for i in label_indices])
+
+    return Data(X=X, D=D, Label=labels)

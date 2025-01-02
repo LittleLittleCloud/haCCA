@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 
+from hacca.utils import _generate_mock_data
+
 from .alignment import direct_alignment, Data, direct_alignment_with_k_nearest_neighbors, icp_2d_with_feature_alignment, icp_2d_alignment, fgw_2d_alignment, fgw_3d_alignment
 
 def test_direct_alignment():
@@ -138,15 +140,3 @@ def test_fgw_3d_alignment():
 
     # b_prime_'s label should be in one of [C, D, E]
     assert all([label in labels_b for label in b_prime_.Label]), "Aligned data should have labels in b_prime"
-
-def _generate_mock_data(n: int, feature_n: int, labels):
-    """
-    Generate [n, feature_n] data and [n, 2] distance matrix with random selection of labels
-    """
-
-    X = np.random.rand(n, feature_n)
-    D = np.random.rand(n, 2)
-    label_indices = np.random.randint(0, len(labels), n)
-    labels = np.array([labels[i] for i in label_indices])
-
-    return Data(X=X, D=D, Label=labels)
