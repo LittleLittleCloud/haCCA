@@ -1,10 +1,22 @@
 
+from collections import Counter
 from matplotlib import cm, pyplot as plt
 import cv2
 import numpy as np
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 
+from hacca.data import Data
+
+def count_elements(lst):
+    return dict(Counter(lst))
+
+def calculate_simpson_index(values):
+    total_count = len(values)
+    unique_values = set(values)
+    counters = count_elements(values)
+    simpson_index = 1 - sum((counters[value] * 1.0 / total_count) ** 2 for value in unique_values)
+    return simpson_index
 
 def create_image_from_data(data, width=500, height=500, dot_size=5, border_size=50, dot_colors=None, border_color=(0, 0, 0), colormap='viridis'):
     """
@@ -93,3 +105,15 @@ def center_and_scale(data, feature_range=(0, 500)):
     data_scaled = scaler_range.fit_transform(data_centered)
     
     return data_scaled
+
+def _generate_mock_data(n: int, feature_n: int, labels):
+    """
+    Generate [n, feature_n] data and [n, 2] distance matrix with random selection of labels
+    """
+
+    X = np.random.rand(n, feature_n)
+    D = np.random.rand(n, 2)
+    label_indices = np.random.randint(0, len(labels), n)
+    labels = np.array([labels[i] for i in label_indices])
+
+    return Data(X=X, D=D, Label=labels)
