@@ -22,7 +22,13 @@ def pairwise_alignment_accuracy(source: Data, target: Data, pi: np.ndarray) -> f
             indicator_matrix[i, j] = source.Label[i] == target.Label[j]
     
     # Calculate the pairwise alignment accuracy
-    accuracy = np.sum(pi * indicator_matrix / np.sum(pi, axis=1, keepdims=True)) / source.X.shape[0]
+    pairwise_metric = pi * indicator_matrix
+
+    # normalize each row of the pairwise_metric matrix between 0 and 1
+    pairwise_metric = pairwise_metric / np.sum(pi, axis=1, keepdims=True)
+
+    # calculate the accuracy
+    accuracy = np.sum(pairwise_metric) / indicator_matrix.shape[0]
 
     return accuracy
 
