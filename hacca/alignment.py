@@ -400,8 +400,15 @@ def find_anchor_points(
     # get the anchor_points
     # [(0, 0), (1, 1), (3, 2), (4, 3)]
     anchor_points = [(i, j) for i in simpson_index for j in indice_group_by_a[i]]
+    anchor_points_unique = list(set(anchor_points))
     anchor_points_with_distance = [(i, j, distances[i, j]) for i, j in anchor_points]
+    min_dist = list(set(
+    [min([p for p in anchor_points_with_distance if p[0] == i], key=lambda x: x[2]) for i in set(x[0] for x in anchor_points_with_distance)] +
+    [min([p for p in anchor_points_with_distance if p[1] == j], key=lambda x: x[2]) for j in set(x[1] for x in anchor_points_with_distance)]
+))
     print("anchor_points_pairs",len(anchor_points_with_distance))
+    print("unique_anchor_points_pairs",len(min_dist))
+
 
     return anchor_points_with_distance
 
