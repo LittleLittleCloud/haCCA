@@ -512,8 +512,10 @@ def direct_alignment_metric(
     # the shape of distances is [n, m] where n is the number of data points in data1 and m is the number of data points in data2
     distances = cdist(a_D, b_prime_D, metric='euclidean') # shape: [n, m]
 
-    # define alignment metric as 1 / (1 + distance)
-    alignment_metric = 1 / (1 + distances)
+    # normalize the distances between 0 and 1
+    # distance = (distance - row_min) / (row_max - row_min)
+    distances = (distances - distances.min(axis=1, keepdims=True)) / (distances.max(axis=1, keepdims=True) - distances.min(axis=1, keepdims=True))
+    alignment_metric = 1 / (distances + 1e-6)
 
     return alignment_metric
 
