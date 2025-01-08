@@ -23,7 +23,16 @@ Repository = "https://github.com/shenxiaotianCNS/APC-MSI.git"
 Issues = "https://github.com/shenxiaotianCNS/APC-MSI/issues"
 
 [project.optional-dependencies]
-# Define any optional dependencies here
+dev = [
+    "pytest",
+    "pip-tools",
+    "lox",
+    "matplotlib",
+    "pandas",
+    "typer",
+    "imgcat",
+    "pre-commit"
+]
 
 [project.scripts]
 # Define any scripts here
