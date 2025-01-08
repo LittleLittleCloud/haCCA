@@ -11,3 +11,5 @@ scikit-learn
 matplotlib
 natsort
 seaborn
+opencv-python
+pot
