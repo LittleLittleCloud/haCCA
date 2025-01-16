@@ -1,12 +1,33 @@
 
 from collections import Counter
+import os
 from matplotlib import cm, pyplot as plt
 import cv2
 import numpy as np
+import pandas as pd
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 
 from hacca.data import Data
+
+color_mapping = {
+        0: 'blue',
+        1: 'red',
+        2: 'green',
+        3: 'yellow',
+        4: 'orange',
+        5: 'purple',
+        6: 'brown',
+        7: 'pink',
+        8: 'gray',
+        9: 'cyan',
+        10: 'magenta',
+        11: 'cyan',
+        12: 'blue',
+        13: 'red',
+        14: 'green',
+        15: 'yellow'
+    }
 
 def count_elements(lst):
     return dict(Counter(lst))
@@ -117,3 +138,96 @@ def _generate_mock_data(n: int, feature_n: int, labels):
     labels = np.array([labels[i] for i in label_indices])
 
     return Data(X=X, D=D, Label=labels)
+
+def _plot_alignment_result(a: Data, b_prime: Data, b_align: Data, pi, title="Transport Plan", work_dir=None, show=True):
+    """
+    Plot the transport plan from source to target
+    It will plot two subplots, with left subplot showing the source data and right subplot showing the target data.
+    For every spot in the source data, it will draw a line to the target data.
+    - Left subplot: The source data
+    - Right subplot: The target data
+
+    source: Data, the source data
+    target: Data, the aligned target data. It should have the same number of data points as the source data.
+    """
+
+    assert b_align.D.shape == b_prime.D.shape, "The aligned target data should have the same number of data points as the target data"
+    assert b_align.X.shape[1] == a.X.shape[1], "The aligned target data should have the same number of features as the target data"
+
+    # find out the max_x, min_x, max_y, min_y in the source and target data
+    max_x = max(max(a.D[:, 0]), max(b_prime.D[:, 0]))
+    min_x = min(min(a.D[:, 0]), min(b_prime.D[:, 0]))
+    max_y = max(max(a.D[:, 1]), max(b_prime.D[:, 1]))
+    min_y = min(min(a.D[:, 1]), min(b_prime.D[:, 1]))
+    max_x = max_x + 0.1 * (max_x - min_x)
+    min_x = min_x - 0.1 * (max_x - min_x)
+    max_y = max_y + 0.1 * (max_y - min_y)
+    min_y = min_y - 0.1 * (max_y - min_y)
+    
+    # Create a new figure
+    fig = plt.figure(figsize=(12, 6))
+
+    # Plot the source data and add labels
+    source_label = a.Label.astype(int)
+    source_label_colors = [color_mapping[label] for label in source_label]
+    ax1 = plt.subplot(1, 2, 1)
+    plt.scatter(a.D[:, 0], a.D[:, 1], c=source_label_colors, s=20)
+    plt.title("A")
+    ax1.set_xlim([min_x, max_x])
+    ax1.set_ylim([min_y, max_y])
+
+
+    # Plot the target data
+    target_label = b_prime.Label.astype(int)
+    target_label_colors = [color_mapping[label] for label in target_label]
+    ax2 = plt.subplot(1, 2, 2)
+    plt.scatter(b_prime.D[:, 0], b_prime.D[:, 1], c=target_label_colors, s=20)
+    plt.title("B_Prime")
+    ax2.set_xlim([min_x, max_x])
+    ax2.set_ylim([min_y, max_y])
+
+    # Plot the alignment lines
+    transFigure = fig.transFigure.inverted()
+    
+    for i in range(b_prime.D.shape[0]):
+        coord1 = transFigure.transform(ax1.transData.transform([b_align.D[i, 0], b_align.D[i, 1]]))
+        coord2 = transFigure.transform(ax2.transData.transform([b_prime.D[i, 0], b_prime.D[i, 1]]))
+        line = plt.Line2D((coord1[0], coord2[0]), (coord1[1], coord2[1]), transform=fig.transFigure, c='black', alpha=0.1)
+        fig.lines.append(line)
+        
+
+    # Plot the cluster labels
+    # unique_categories = np.unique(source_label)
+    # handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[cat], markersize=10) for cat in unique_categories]
+    # plt.legend(handles, unique_categories, title="Metabolic Clusters")
+
+    if work_dir is not None:
+        plt.savefig(os.path.join(work_dir, 'transport_plan.pdf'))
+        
+    if show is True:
+        plt.show()
+    
+    return plt
+
+def _plot_b_predict(
+        b_prime: Data, # B' (X_2, D)
+        work_dir: str = None, # the working directory, will be created if not exists. Will be used to save the intermediate results.
+        save: bool = True
+):
+    b_prime_D = b_prime.D
+    b_prime_labels = b_prime.Label.astype(int)
+
+    if work_dir is not None:
+        # 可视化
+        plt.figure(figsize=(6, 6))
+        plt.scatter(pd.DataFrame(b_prime_D).iloc[:, 0], pd.DataFrame(b_prime_D).iloc[:, 1],
+                    c=[color_mapping[category] for category in b_prime_labels.tolist()], s=20, alpha=1)
+        plt.ylabel('Y')
+        unique_categories =  np.unique(b_prime_labels)
+        handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color_mapping[cat], markersize=10) for
+                   cat in unique_categories]
+        plt.legend(handles, unique_categories, title="Metabolic Clusters")
+       # plt.show()
+        if save is True:
+            plt.savefig(os.path.join(work_dir, 'align.pdf'))
+            
