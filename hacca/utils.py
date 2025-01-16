@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 
-from hacca.data import Data
+from .data import Data
 
 color_mapping = {
         0: 'blue',
@@ -139,7 +139,7 @@ def _generate_mock_data(n: int, feature_n: int, labels):
 
     return Data(X=X, D=D, Label=labels)
 
-def _plot_alignment_result(a: Data, b_prime: Data, b_align: Data, pi, title="Transport Plan", work_dir=None, show=True):
+def plot_alignment_result(a: Data, b_prime: Data, b_align: Data, pi, title="Transport Plan", work_dir=None, show=True):
     """
     Plot the transport plan from source to target
     It will plot two subplots, with left subplot showing the source data and right subplot showing the target data.
@@ -186,6 +186,9 @@ def _plot_alignment_result(a: Data, b_prime: Data, b_align: Data, pi, title="Tra
     ax2.set_xlim([min_x, max_x])
     ax2.set_ylim([min_y, max_y])
 
+    # disable y axis for the right subplot
+    plt.setp(ax2.get_yticklabels(), visible=False)
+
     # Plot the alignment lines
     transFigure = fig.transFigure.inverted()
     
@@ -209,7 +212,7 @@ def _plot_alignment_result(a: Data, b_prime: Data, b_align: Data, pi, title="Tra
     
     return plt
 
-def _plot_b_predict(
+def plot_b_predict(
         b_prime: Data, # B' (X_2, D)
         work_dir: str = None, # the working directory, will be created if not exists. Will be used to save the intermediate results.
         save: bool = True
