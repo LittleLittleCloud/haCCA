@@ -1,6 +1,6 @@
 import numpy as np
 
-from hacca.utils import _generate_mock_data
+from .utils import _generate_mock_data
 from .loss import pairwise_alignment_accuracy, label_transfer_ari
 from .alignment import direct_alignment_metric
 
