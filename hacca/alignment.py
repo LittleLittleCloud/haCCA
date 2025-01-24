@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from scipy.optimize import minimize
 import ot
+import STalign
 
 color_mapping = {
     0: 'blue',
@@ -411,6 +412,85 @@ def find_anchor_points(
 
 
     return anchor_points_with_distance
+
+def STAlign_process(a,b_prime):
+    import matplotlib.pyplot as plt
+    xJ = a.D[:, 0]
+    yJ = a.D[:, 1]
+    xI = b_prime.D[:, 0]
+    yI = b_prime.D[:, 1]
+    XI,YI,I,fig = STalign.rasterize(xI,yI,dx=30,blur=1.5)
+    XJ,YJ,J,fig = STalign.rasterize(xJ,yJ,dx=30, blur=1.5)
+    extentI = STalign.extent_from_x((YI,XI))
+    extentJ = STalign.extent_from_x((YJ,XJ))
+    # run LDDMM
+    # specify device (default device for STalign.LDDMM is cpu)
+    if torch.cuda.is_available():
+        device = 'cuda:0'
+    else:
+        device = 'cpu'
+    
+    # keep all other parameters default
+    params = {
+                'niter': 1000,
+                'device':device,
+                'epV': 50
+              }
+    
+    out = STalign.LDDMM([YI,XI],I,[YJ,XJ],J,**params)
+    # get necessary output variables
+    A = out['A']
+    v = out['v']
+    xv = out['xv']
+    # set device for building tensors
+    if torch.cuda.is_available():
+        torch.set_default_device('cuda:0')
+    else:
+        torch.set_default_device('cpu')
+        # apply transform
+    phii = STalign.build_transform(xv,v,A,XJ=[YJ,XJ],direction='b')
+    phiI = STalign.transform_image_source_to_target(xv,v,A,[YI,XI],I,[YJ,XJ])
+    
+    #switch tensor from cuda to cpu for plotting with numpy
+    if phii.is_cuda:
+        phii = phii.cpu()
+    if phiI.is_cuda:
+        phiI = phiI.cpu()
+    # transform is invertible
+    phi = STalign.build_transform(xv,v,A,XJ=[YI,XI],direction='f')
+    phiiJ = STalign.transform_image_target_to_source(xv,v,A,[YJ,XJ],J,[YI,XI])
+    
+    #switch tensor from cuda to cpu for plotting with numpy
+    if phi.is_cuda:
+        phi = phi.cpu()
+    if phiiJ.is_cuda:
+        phiiJ = phiiJ.cpu()
+    # apply transform to original points
+    tpointsI= STalign.transform_points_source_to_target(xv,v,A, np.stack([yI, xI], 1).astype(np.double))
+    
+    #switch tensor from cuda to cpu for plotting with numpy
+    if tpointsI.is_cuda:
+        tpointsI = tpointsI.cpu()
+    
+    #switch from row column coordinates (y,x) to (x,y)
+    xI_LDDMM = tpointsI[:,1]
+    yI_LDDMM = tpointsI[:,0]
+    df3 = pd.DataFrame(
+    
+        {
+    
+            "x": xI_LDDMM,
+    
+            "y": yI_LDDMM,
+           
+        },
+    
+    )
+    b_prime.D=df3.to_numpy()
+   
+
+    return b_prime
+
 
 def find_high_correlation_features(
         a: Data, # A (n, X_1, D),
